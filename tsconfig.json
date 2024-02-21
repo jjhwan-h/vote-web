@@ -1,0 +1,26 @@
+{
+  "ts-node":{"files":true}, //ts-node는 기본적으로 includes,excludes,files을 로드하지 않는다.
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES2017",
+    "declaration": true,
+    "sourceMap": true,
+    "strict": true,
+    "noEmitOnError": true,
+    "lib": [],
+    "types": [],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "baseUrl": ".",
+    // "paths": {
+    //   "@credo-ts/*": ["packages/*/src"]
+    // },
+    // TODO: we should update code to assume errors are of type 'unknown'
+    "useUnknownInCatchVariables": false,
+    "typeRoots": ["./node_modules/@types","./types"]
+  },
+  "exclude": ["node_modules", "build", "**/*.test.ts", "**/__tests__/*.ts", "**/__mocks__/*.ts", "**/build/**"]
+}

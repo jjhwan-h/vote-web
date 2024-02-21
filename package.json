@@ -1,0 +1,46 @@
+{
+  "name": "credo-demo",
+  "version": "1.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "dev:server": "nodemon server.ts",
+    "alice": "ts-node src/AliceInquirer.ts",
+    "faber": "ts-node src/FaberInquirer.ts",
+    "refresh": "rm -rf ./node_modules ./yarn.lock && yarn"
+  },
+  "dependencies": {
+    "@hyperledger/anoncreds-nodejs": "^0.2.0",
+    "@hyperledger/aries-askar-nodejs": "^0.2.0",
+    "@hyperledger/indy-vdr-nodejs": "^0.2.0",
+    "@types/dotenv": "^8.2.0",
+    "cookie-parser": "^1.4.6",
+    "express-session": "^1.18.0",
+    "inquirer": "^8.2.5",
+    "morgan": "^1.10.0",
+    "nunjucks": "^3.2.4"
+  },
+  "devDependencies": {
+    "@credo-ts/anoncreds": "*",
+    "@credo-ts/askar": "*",
+    "@credo-ts/cheqd": "*",
+    "@credo-ts/core": "*",
+    "@credo-ts/indy-vdr": "*",
+    "@credo-ts/node": "*",
+    "@types/cookie-parser": "^1.4.6",
+    "@types/express": "^4.17.21",
+    "@types/express-session": "^1.17.10",
+    "@types/figlet": "^1.5.4",
+    "@types/inquirer": "^8.2.6",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^20.11.19",
+    "@types/nunjucks": "^3.2.6",
+    "@types/sequelize": "^4.28.20",
+    "clear": "^0.1.0",
+    "figlet": "^1.5.2",
+    "nodemon": "^3.0.3",
+    "ts-node": "^10.4.0"
+  }
+}
