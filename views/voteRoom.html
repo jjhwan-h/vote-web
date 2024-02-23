@@ -367,8 +367,14 @@
     </body>
   <script>
       const join_btn = document.getElementById('room1');
+      console.log(join_btn)
       join_btn.addEventListener('click',()=>{
-
+        console.log("got it")
+          axios.get("/room/connection").then((res)=>{
+            console.log(res.data);
+            let QRmodal = document.getElementById('QRmodal');
+            QRmodal.style.display = 'block';
+          })
       });
   </script>
   

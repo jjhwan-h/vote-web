@@ -1,5 +1,6 @@
 import express from 'express'
-import { makeConnection } from 'controllers/room';
+import { makeConnection, waitConnection } from '../controllers/room';
+import {hasDid, hasNotDid} from '../middlewares'
 const router = express.Router();
 
 // router.use((req, res, next) => {
@@ -9,6 +10,6 @@ const router = express.Router();
 // router.get('/profile', isLoggedIn, renderProfile);
 // router.get('/join', isNotLoggedIn, renderJoin);
 
-router.get('/connection', makeConnection);
+router.get('/connection', makeConnection, waitConnection);
 export {router};
 

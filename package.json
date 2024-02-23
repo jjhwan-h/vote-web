@@ -20,7 +20,8 @@
     "express-session": "^1.18.0",
     "inquirer": "^8.2.5",
     "morgan": "^1.10.0",
-    "nunjucks": "^3.2.4"
+    "nunjucks": "^3.2.4",
+    "tsyringe": "^4.8.0"
   },
   "devDependencies": {
     "@credo-ts/anoncreds": "*",

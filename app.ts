@@ -5,18 +5,22 @@ import path from 'path';
 import session from 'express-session';
 import nunjucks from 'nunjucks';
 import dotenv from 'dotenv';
-import {Faber} from './src/Faber';
-
+import {FaberInquirer, runFaber } from './src/FaberInquirer';
 dotenv.config();
 import {router as pageRouter} from './routes/page';
-// import authRouter from './routes/auth';
+import {router as roomRouter} from './routes/room';
+import 'reflect-metadata';
+import {container,registry} from 'tsyringe';
+import { Agent } from '@credo-ts/core';
+import { BaseAgent } from './src/BaseAgent';
+
 // import postRouter from './routes/post';
 // import userRouter from './routes/user';
 // import { sequelize } from './models';
 
 const app = express();
 
-app.set('port', process.env.PORT || 8001);
+app.set('port', process.env.SERVER_PORT || 8001);
 app.set('view engine', 'html');
 nunjucks.configure('views', {
   express: app,
@@ -31,9 +35,6 @@ nunjucks.configure('views', {
 //     console.error(err);
 //   });
 
-const Issuer = new Faber(Number(process.env.PORT!),process.env.NAME!.toString());
-if(!Issuer.anonCredsIssuerId) Issuer.createDid(process.env.REGISTRY!.toString());
-else Issuer.importDid(process.env.REGISTRY!.toString());
 
 app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -51,9 +52,15 @@ app.use(session({
   },
 }));
 
+const port = process.env.PORT
+const name = process.env.NAME
+container.register("port",{useValue:port})
+container.register("name",{useValue:name})
+// runFaber();
+container.resolve(FaberInquirer);
 
 app.use('/', pageRouter);
-// app.use('/auth', authRouter);
+app.use('/room', roomRouter);
 // app.use('/post', postRouter);
 // app.use('/user', userRouter);
 

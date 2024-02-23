@@ -1,58 +1,36 @@
 import type { RegisterCredentialDefinitionReturnStateFinished } from '@credo-ts/anoncreds'
-import type { ConnectionRecord, ConnectionStateChangedEvent } from '@credo-ts/core'
+import type { ConnectionRecord, ConnectionStateChangedEvent, InitConfig } from '@credo-ts/core'
 import type { IndyVdrRegisterSchemaOptions, IndyVdrRegisterCredentialDefinitionOptions } from '@credo-ts/indy-vdr'
-import type BottomBar from 'inquirer/lib/ui/bottom-bar'
-
-import { ConnectionEventTypes, KeyType, TypedArrayEncoder, utils } from '@credo-ts/core'
-import { ui } from 'inquirer'
+import {agentDependencies} from '@credo-ts/node'
+import { ConnectionEventTypes, KeyType, TypedArrayEncoder, utils,Agent } from '@credo-ts/core'
 
 import { BaseAgent, indyNetworkConfig } from './BaseAgent'
 import { Color, Output, greenText, purpleText, redText } from './OutputClass'
+import dotenv from 'dotenv'
+import { singleton,inject} from 'tsyringe'
 
 export enum RegistryOptions {
   indy = 'did:indy',
   cheqd = 'did:cheqd',
 }
 
-export class Faber extends BaseAgent {
+@singleton()
+class Faber extends BaseAgent {
   public outOfBandId?: string
   public credentialDefinition?: RegisterCredentialDefinitionReturnStateFinished
-  public anonCredsIssuerId?: string
-  public ui: BottomBar
-
-  public constructor(port: number, name: string) {
-    super({ port, name })
-    this.ui = new ui.BottomBar()
+ 
+  public constructor(@inject("port")port: number, @inject("name")name: string) {
+    super(port, name)
+    this.initializeAgent();
+    console.log("Faber Construct")
   }
 
   public static async build(): Promise<Faber> {
-    const faber = new Faber(9001, 'faber')
+    const faber = new Faber(Number(process.env.PORT), process.env.NAME!)
     await faber.initializeAgent()
     return faber
   }
 
-  public async importDid(registry: string) {
-    // NOTE: we assume the did is already registered on the ledger, we just store the private key in the wallet
-    // and store the existing did in the wallet
-    // indy did is based on private key (seed)
-    const unqualifiedIndyDid = '2jEvRuKmfBJTRa7QowDpNN'
-    const cheqdDid = 'did:cheqd:testnet:d37eba59-513d-42d3-8f9f-d1df0548b675'
-    const indyDid = `did:indy:${indyNetworkConfig.indyNamespace}:${unqualifiedIndyDid}`
-
-    const did = registry === RegistryOptions.indy ? indyDid : cheqdDid
-    await this.agent.dids.import({
-      did,
-      overwrite: true,
-      privateKeys: [
-        {
-          keyType: KeyType.Ed25519,
-          privateKey: TypedArrayEncoder.fromString('afjdemoverysercure00000000000000'),
-        },
-      ],
-    })
-    this.anonCredsIssuerId = did
-  }
-  
 
   private async getConnectionRecord() {
     if (!this.outOfBandId) {
@@ -142,7 +120,7 @@ export class Faber extends BaseAgent {
       issuerId: this.anonCredsIssuerId,
     }
     this.printSchema(schemaTemplate.name, schemaTemplate.version, schemaTemplate.attrNames)
-    this.ui.updateBottomBar(greenText('\nRegistering schema...\n', false))
+
 
     const { schemaState } = await this.agent.modules.anoncreds.registerSchema<IndyVdrRegisterSchemaOptions>({
       schema: schemaTemplate,
@@ -157,7 +135,7 @@ export class Faber extends BaseAgent {
         `Error registering schema: ${schemaState.state === 'failed' ? schemaState.reason : 'Not Finished'}`
       )
     }
-    this.ui.updateBottomBar('\nSchema registered!\n')
+
     return schemaState
   }
 
@@ -166,7 +144,6 @@ export class Faber extends BaseAgent {
       throw new Error(redText('Missing anoncreds issuerId'))
     }
 
-    this.ui.updateBottomBar('\nRegistering credential definition...\n')
     const { credentialDefinitionState } =
       await this.agent.modules.anoncreds.registerCredentialDefinition<IndyVdrRegisterCredentialDefinitionOptions>({
         credentialDefinition: {
@@ -190,7 +167,6 @@ export class Faber extends BaseAgent {
     }
 
     this.credentialDefinition = credentialDefinitionState
-    this.ui.updateBottomBar('\nCredential definition registered!!\n')
     return this.credentialDefinition
   }
 
@@ -199,7 +175,6 @@ export class Faber extends BaseAgent {
     const credentialDefinition = await this.registerCredentialDefinition(schema.schemaId)
     const connectionRecord = await this.getConnectionRecord()
 
-    this.ui.updateBottomBar('\nSending credential offer...\n')
 
     await this.agent.credentials.offerCredential({
       connectionId: connectionRecord.id,
@@ -224,18 +199,10 @@ export class Faber extends BaseAgent {
         },
       },
     })
-    this.ui.updateBottomBar(
-      `\nCredential offer sent!\n\nGo to the Alice agent to accept the credential offer\n\n${Color.Reset}`
-    )
   }
 
-  private async printProofFlow(print: string) {
-    this.ui.updateBottomBar(print)
-    await new Promise((f) => setTimeout(f, 2000))
-  }
 
   private async newProofAttribute() {
-    await this.printProofFlow(greenText(`Creating new proof attribute for 'name' ...\n`))
     const proofAttribute = {
       name: {
         name: 'name',
@@ -253,7 +220,6 @@ export class Faber extends BaseAgent {
   public async sendProofRequest() {
     const connectionRecord = await this.getConnectionRecord()
     const proofAttribute = await this.newProofAttribute()
-    await this.printProofFlow(greenText('\nRequesting proof...\n', false))
 
     await this.agent.proofs.requestProof({
       protocolVersion: 'v2',
@@ -266,9 +232,6 @@ export class Faber extends BaseAgent {
         },
       },
     })
-    this.ui.updateBottomBar(
-      `\nProof request sent!\n\nGo to the Alice agent to accept the proof request\n\n${Color.Reset}`
-    )
   }
 
   public async sendMessage(message: string) {
@@ -286,3 +249,6 @@ export class Faber extends BaseAgent {
     await this.agent.shutdown()
   }
 }
+
+
+export {Faber}

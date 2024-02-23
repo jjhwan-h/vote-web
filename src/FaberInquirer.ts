@@ -6,6 +6,7 @@ import { BaseInquirer, ConfirmOptions } from './BaseInquirer'
 import { Faber, RegistryOptions } from './Faber'
 import { Listener } from './Listener'
 import { Title } from './OutputClass'
+import { singleton, injectable,container,inject } from 'tsyringe'
 
 export const runFaber = async () => {
   clear()
@@ -23,6 +24,7 @@ enum PromptOptions {
   Restart = 'Restart',
 }
 
+@singleton()
 export class FaberInquirer extends BaseInquirer {
   public faber: Faber
   public promptOptionsString: string[]
@@ -34,12 +36,14 @@ export class FaberInquirer extends BaseInquirer {
     this.listener = new Listener()
     this.promptOptionsString = Object.values(PromptOptions)
     this.listener.messageListener(this.faber.agent, this.faber.name)
+    console.log("FaberInquirer Construct")
   }
 
   public static async build(): Promise<FaberInquirer> {
-    const faber = await Faber.build()
-    return new FaberInquirer(faber)
-  }
+    const faber = await Faber.build();
+    const faberInquirer = await new FaberInquirer(faber);
+    return faberInquirer
+  } 
 
   private async getPromptChoice() {
     if (this.faber.outOfBandId) return prompt([this.inquireOptions(this.promptOptionsString)])
@@ -90,7 +94,7 @@ export class FaberInquirer extends BaseInquirer {
 
   public async credential() {
     const registry = await prompt([this.inquireOptions([RegistryOptions.indy, RegistryOptions.cheqd])])
-    await this.faber.importDid(registry.options)
+    await this.faber.importDid()
     await this.faber.issueCredential()
     const title = 'Is the credential offer accepted?'
     await this.listener.newAcceptedPrompt(title, this)
@@ -130,4 +134,3 @@ export class FaberInquirer extends BaseInquirer {
   }
 }
 
-void runFaber()
