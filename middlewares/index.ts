@@ -1,21 +1,20 @@
-import { RequestHandler } from "express";
+import {RequestHandler} from 'express';
 
-const hasDid :RequestHandler= (req, res, next) => {
-    if (req) {
-      next();
-    } else {
-      res.status(403).send('Did발급필요');
+const isLoggedIn: RequestHandler=(req,res,next)=>{
+    if(req.isAuthenticated()){
+        next();
+    }else{
+        res.status(403).send('로그인 필요');
     }
-  };
-  
-const hasNotDid :RequestHandler = (req, res, next) => {
-    if (req) {
-      next();
-    } else {
-      const message = encodeURIComponent('did발급완료된상태');
-      res.redirect(`/?error=${message}`);
+};
+
+const isNotLoggedIn: RequestHandler=(req,res,next)=>{
+    if(!req.isAuthenticated()){
+        next();
+    }else{
+        const message = encodeURIComponent('로그인한 상태입니다.');
+        res.redirect(`/?error=${message}`);
     }
-}
-    
-export {hasDid, hasNotDid};
-  
+};
+
+export {isLoggedIn, isNotLoggedIn};

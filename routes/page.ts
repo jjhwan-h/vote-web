@@ -10,7 +10,8 @@ const router = express.Router();
 // router.get('/profile', isLoggedIn, renderProfile);
 // router.get('/join', isNotLoggedIn, renderJoin);
 
-router.get('/', getPublic,renderMain);
+//router.get('/', getPublic,renderMain);
+router.get('/',renderMain);
 router.get('/voteRoom',renderVoteRoom);
 
 export {router};

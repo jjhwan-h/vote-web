@@ -1,24 +1,27 @@
 {
   "ts-node":{"files":true}, //ts-node는 기본적으로 includes,excludes,files을 로드하지 않는다.
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "commonjs", // Typescript 컴파일러가 commonjs형식으로 코드를 생성.
     "target": "ES2017",
     "declaration": true,
     "sourceMap": true,
     "strict": true,
     "noEmitOnError": true,
+    "allowJs":true,
     "lib": [],
     "types": [],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "allowImportingTsExtensions": true, // .ts확장자 import허가
+    "noEmit": true,  // emit distfolder
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "forceConsistentCasingInFileNames": true,            /* Ensure that casing is correct in imports. */
+    "skipLibCheck": true, //can't find namespace ValidatorJS 해결
     "baseUrl": ".",
-    // "paths": {
-    //   "@credo-ts/*": ["packages/*/src"]
-    // },
-    // TODO: we should update code to assume errors are of type 'unknown'
+    //"outDir": "dist", // 컴파일된 js파일 생성위치
     "useUnknownInCatchVariables": false,
     "typeRoots": ["./node_modules/@types","./types"]
   },

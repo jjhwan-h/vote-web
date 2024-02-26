@@ -1,6 +1,6 @@
 import express from 'express'
 import { makeConnection, waitConnection } from '../controllers/room';
-import {hasDid, hasNotDid} from '../middlewares'
+//import {hasDid, hasNotDid} from '../middlewares'
 const router = express.Router();
 
 // router.use((req, res, next) => {

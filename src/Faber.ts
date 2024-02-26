@@ -6,7 +6,6 @@ import { ConnectionEventTypes, KeyType, TypedArrayEncoder, utils,Agent } from '@
 
 import { BaseAgent, indyNetworkConfig } from './BaseAgent'
 import { Color, Output, greenText, purpleText, redText } from './OutputClass'
-import dotenv from 'dotenv'
 import { singleton,inject} from 'tsyringe'
 
 export enum RegistryOptions {
