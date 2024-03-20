@@ -37,6 +37,7 @@ export class FaberInquirer extends BaseInquirer {
     this.promptOptionsString = Object.values(PromptOptions)
     this.listener.messageListener(this.faber.agent, this.faber.name)
     console.log("FaberInquirer Construct")
+    console.log(this.faber.anonCredsIssuerId); //did
   }
 
   public static async build(): Promise<FaberInquirer> {

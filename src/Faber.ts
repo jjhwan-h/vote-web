@@ -20,7 +20,9 @@ class Faber extends BaseAgent {
  
   public constructor(@inject("port")port: number, @inject("name")name: string) {
     super(port, name)
+
     this.initializeAgent();
+    this.createDid();
     console.log("Faber Construct")
   }
 

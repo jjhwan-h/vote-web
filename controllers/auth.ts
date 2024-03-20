@@ -1,66 +1,116 @@
-import bcrypt from 'bcrypt';
-import passport,{AuthenticateCallback,AuthenticateOptions} from 'passport';
-import passportLocal from 'passport-local';
-import Admin from '../models/admin';
 import { RequestHandler } from 'express';
+import {transporter} from '../configs/email';
+import dotenv from 'dotenv';
+import Email from '../models/email';
+import User from '../models/user';
+dotenv.config();
 
+const generateRandom = function(min:number, max:number) {
+  const randomNumber = Math.floor(Math.random() * (max-min+1)) + min;
+  return randomNumber
+}
 
-const join :RequestHandler=async (req,res,next)=>{
-    const {nick, password} = req.body;
+const generateEmailVerificationToken = ()=>{
+  const token = crypto.randomUUID();
+  const expires = new Date();
+  expires.setHours(expires.getHours() +1);
+  return {token, expires};
+}
+
+const sendEmail:RequestHandler=async(req,res,next)=>{
+  const email:string = req.body.email;
+  console.log(email)
+  
+  const result = generateEmailVerificationToken();
+  const mailOptions = {
+    to : email, //사용자가 입력한 이메일 -> 목적지 주소 이메일
+    html: `<p>Please click the following link to verify your email address:</p>
+    <p> <a href="http://${process.env.URL}:${process.env.SERVER_PORT}/auth/verify/?email=${email}&token=${result.token}">Verify email</a></p>
+    <p>This link will expire on ${result.expires}.</p>`
+  };
+
+  const exEmail = await Email.findOne({where:{email}});
+
+  try{
+    if(exEmail){
+      await exEmail.update({token:result.token})
+    }else{
+      await Email.create({
+        email,
+        token:result.token,
+        isValid:false
+      })
+    }
+    transporter.sendMail(mailOptions,(err,response)=>{
+      console.log(response);
+      if(err) {
+        res.json({ok : false , msg : ' 메일 전송에 실패하였습니다. '})
+        transporter.close() //전송종료
+        return
+    } else {
+        res.json({ok: true, msg: ' 메일 전송에 성공하였습니다. '});
+        transporter.close() //전송종료
+        return 
+    }
+    });
+  }catch(error){
+    console.error('Error:: creating or updating emailTable:', error);
+    return next(error);
+  }
+}
+
+const verifyEmail :RequestHandler = async(req,res,next)=>{
+    const email:string = req.query.email as string;
+    const token: string = req.query.token as string;
+    console.log(email, token);
+    
     try{
-        const exUser = await Admin.findOne({where:{nick}});
-        if(exUser){
-            return res.redirect('/join?error=exist');
+      const exEmail = await Email.findOne({where:{email}});
+      if(exEmail){
+        const originToken = exEmail.token;
+        if(token===originToken){
+          await exEmail.update({isValid:true});
+          res.send('인증완료');
         }
-        const hash = await bcrypt.hash(password,15); //12~31
-        await Admin.create({
-            nick,
-            password:hash
-        });
-        return res.redirect('/auth');
-    }catch(error){
-        console.error(error);
-        return next(error);
+        else{
+          res.send("인증실패");
+        }
+      }
+      else{
+        res.status(404).send('email 전송요청을 먼저해주세요');
+      }
+    }
+    catch(error){
+      console.error('Error:: While verifyEmail:', error);
+      return next(error);
     }
 }
 
-const login: RequestHandler = (req,res,next)=>{
-    passport.authenticate('local',(authError:any, user:any, info:any)=>{ // 로컬로그인 전략
-        if(authError){
-            return next(authError);
+const join :RequestHandler=async (req,res,next)=>{ //VC발급
+  const {email, name, tel} = req.body;
+  console.log(email, name, tel)
+
+  try{
+      const exEmail = await Email.findOne({where:{email}}); //이메일 검증 확인
+      if(exEmail){
+        if(exEmail.isValid){
+          await exEmail.update({isValid:false}); //다른 사람이 동일한 이메일로 가입하는 것을 방지
+          res.redirect('/main');
+        }{
+          res.send("이메일의 인증버튼을 먼저눌러주세요");
         }
-        if(!user){
-            return res.redirect(`/auth?loginError=${info.message}`);
-        }
-        /**
-         * passport는 req객체에 login과 logout메서드를  추가한다.
-         * login은 serializeUser를 호출 req.login에 제공하는 user객체가 serializeUser로 넘어간다. 이때 세션쿠기가 브라우저에 전송됨.
-         */
-        return req.login(user,(loginError)=>{
-            if(loginError){
-                console.error(loginError);
-                return next(loginError)
-            }
-            return res.redirect('/auth/index');
-        });
-    })(req,res,next);
-};
-
-/**
- * req.user객체와 req.session객체를 제거.
- */
-const logout: RequestHandler=(req,res)=>{
-    req.logout(()=>{
-        res.redirect('/login');
-    });
-};
-
-const renderSignIn: RequestHandler= (req, res) => {
-    res.render('auth/login', { title: 'admin-login' });
-  };
-
-const renderIndex: RequestHandler=(req,res)=>{
-    res.render('auth/index',{title: 'admin-index'});
+      }
+      else{
+        res.send("이메일 인증을 먼저 해주세요");
+      }
+  }catch(error){
+    console.error('Error:: While join:', error);
+    return next(error);
+  }
 }
 
-export {login,join,logout,renderSignIn, renderIndex}
+const login: RequestHandler=async(req,res,next)=>{ //VP검증
+  res.send("VP검증");
+}
+
+export {login, join,verifyEmail, sendEmail}

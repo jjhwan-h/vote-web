@@ -2,3 +2,5 @@ node_modules
 .env
 .sequelizerc
 /dist
+backend-397418-2e061ea5538f.json
+/configs
