@@ -1,14 +1,21 @@
 import { RequestHandler } from "express";
 
+
+export const renderMain : RequestHandler = async (req, res, next) => {
+  res.render('main',{
+    title:'DIDvote',
+  });
+};
 export const renderVoteRoom: RequestHandler= (req, res) => {
   res.render('voteRoom', { title: '투표방 - DIDVote' });
 };
+export const renderVoteRoomCreate: RequestHandler=(req,res)=>{
+  res.render('voteRoomCreate',{title: '투표방생성'});
+}
+export  const renderJoin: RequestHandler=(req,res)=>{
+  res.render('join',{title:'회원가입'});
+}
 
-export const renderMain : RequestHandler = async (req, res, next) => {
-    res.render('main',{
-      title:'DIDvote',
-    });
-};
 
 // export const renderHashtag: RequestHandler= async (req,res,next)=>{
 //   const query = req.query.hashtag;

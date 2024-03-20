@@ -1,7 +1,7 @@
 {
   "ts-node":{"files":true}, //ts-node는 기본적으로 includes,excludes,files을 로드하지 않는다.
   "compilerOptions": {
-    "module": "commonjs", // Typescript 컴파일러가 commonjs형식으로 코드를 생성.
+    "module": "CommonJS", // Typescript 컴파일러가 commonjs형식으로 코드를 생성.
     "target": "ES2017",
     "declaration": true,
     "sourceMap": true,

@@ -1,22 +1,23 @@
 import {Sequelize} from 'sequelize'
-import configObj from '../configs/config';
+import {development, test, production} from '../configs/config';
 import User from './user';
 import Admin from './admin';
 import Room from './room';
-
-const env = process.env.NODE_ENV as 'production' | 'test' || 'development';
-console.log(env)
-const config = configObj[env];
-export const sequelize = new Sequelize(config.database,config.username, config.password,config);
+import Candidate from './candidate';
+import Email from './email';
+//const env = process.env.NODE_ENV as 'production' || 'test' || 'development';
+const config = development
+export const sequelize = new Sequelize(config.database!,config.username!, config.password,config);
 
 User.initiate(sequelize);
 Admin.initiate(sequelize);
 Room.initiate(sequelize);
+Candidate.initiate(sequelize);
+Email.initiate(sequelize);
 
-// User.associate();
-// Admin.associate();
-// Room.associate();
-
+User.associate();
+Room.associate();
+Candidate.associate();
 
 //const basename = path.basename(__filename);
 //

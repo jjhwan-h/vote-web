@@ -102,9 +102,8 @@ export class BaseAgent {
   }
 
   public async createDid():Promise<string>{
-        
     const indyDocument :DidCreateResult = await this.agent.dids.create({
-        method:'indy',
+        method:"did:sov",
         privateKeys: [
           {
             keyType: KeyType.Ed25519,
@@ -112,8 +111,10 @@ export class BaseAgent {
           },
         ]
       });
+      console.log(indyDocument);
       const indyDid = String(indyDocument.didState.did);
-      return indyDid;
+      console.log("indyDid"+indyDid);
+      return this.anonCredsIssuerId= indyDid;
     }
 
   public async importDid() {
@@ -124,7 +125,7 @@ export class BaseAgent {
     // const cheqdDid = 'did:cheqd:testnet:d37eba59-513d-42d3-8f9f-d1df0548b675'
     // const indyDid = `did:indy:${indyNetworkConfig.indyNamespace}:${unqualifiedIndyDid}`
 
-    if (!this.anonCredsIssuerId) this.createDid();
+    if (!this.anonCredsIssuerId) this.anonCredsIssuerId=await this.createDid();
     else return this.anonCredsIssuerId
   }
 

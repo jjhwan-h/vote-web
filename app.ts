@@ -11,16 +11,13 @@ import {FaberInquirer, runFaber } from './src/FaberInquirer';
 import {router as pageRouter} from './routes/page';
 import {router as roomRouter} from './routes/room';
 import {router as authRouter} from './routes/auth';
+import {router as adminRouter} from './routes/admin';
 import {container} from 'tsyringe';
 import {sequelize} from './models/index';
 import passportConfig from './pass_port/index';
 
 dotenv.config();
 passportConfig();
-
-// import postRouter from './routes/post';
-// import userRouter from './routes/user';
-// import { sequelize } from './models';
 
 const app = express();
 
@@ -53,8 +50,10 @@ app.use(session({ //express-session 1.5버전이전이라면 cookieParser뒤에 
   cookie: {
     httpOnly: true,
     secure: false,
+    maxAge: 2* 60 * 60 * 1000 // 2시간
   },
 }));
+
 app.use(passport.initialize()); //req객체에 passport 설정을 심는다.
 app.use(passport.session());  //req.session객체에 passport정보 저장 => session선언 뒤에 선언
 
@@ -62,14 +61,13 @@ const port = process.env.PORT
 const name = process.env.NAME
 container.register("port",{useValue:port})
 container.register("name",{useValue:name})
-// runFaber();
 container.resolve(FaberInquirer);
 
 app.use('/', pageRouter);
 app.use('/room', roomRouter);
 app.use('/auth',authRouter);
-// app.use('/post', postRouter);
-// app.use('/user', userRouter);
+app.use('/admin',adminRouter);
+
 
 app.use((req, res, next) => {
   const error : Error =  new Error(`${req.method} ${req.url} 라우터가 없습니다.`); 
@@ -85,5 +83,6 @@ const errorHandler:ErrorRequestHandler = (err, req, res, next) => {
   res.render('error');
 };
 app.use(errorHandler);
+
 
 export default app;

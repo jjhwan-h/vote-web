@@ -11,5 +11,12 @@ declare global{
     namespace Express{
         interface User extends IAdmin {}
     }
+
+}
+declare module "express-session" {
+    export interface SessionData {
+        email: string,
+        token: string,
+    }
 }
 
