@@ -95,13 +95,15 @@ const join :RequestHandler=async (req,res,next)=>{ //VC발급
       if(exEmail){
         if(exEmail.isValid){
           await exEmail.update({isValid:false}); //다른 사람이 동일한 이메일로 가입하는 것을 방지
-          res.redirect('/main');
-        }{
-          res.send("이메일의 인증버튼을 먼저눌러주세요");
+          /**VC발급 */
+          return res.redirect('/?message=가입성공');
+        }
+        else{
+          return res.redirect(`/join?error=이메일의 인증버튼을 먼저눌러주세요`);
         }
       }
       else{
-        res.send("이메일 인증을 먼저 해주세요");
+        return res.redirect(`/join?error=이메일 인증을 먼저 해주세요`);
       }
   }catch(error){
     console.error('Error:: While join:', error);

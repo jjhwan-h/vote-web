@@ -165,7 +165,7 @@
 
       <div class="col-md-7 col-lg-8">
         <h4 class="mb-3">회원정보</h4>
-        <form id="joinForm" class="needs-validation" onsubmit="return handleSubmit(event);" >
+        <form id="joinForm" class="needs-validation" action="/auth/join" method="post" >
           <div class="row g-3">
             <div class="col-sm-6">
               <label for="Name" class="form-label">회원이름</label>
@@ -188,7 +188,6 @@
         </div>
     </div>
   </main>
-
   <footer class="my-5 pt-5 text-body-secondary text-center text-small">
     <p class="mb-1">&copy; 2017–2024 Company Name</p>
     <ul class="list-inline">
@@ -197,6 +196,8 @@
       <li class="list-inline-item"><a href="#">Support</a></li>
     </ul>
   </footer>
+  {% block content %}
+  {% endblock %}
 </div>
 <script src="../assets/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
@@ -210,15 +211,16 @@
         axios.post('/auth/email',{email:value});
     });
 
-    const handleSubmit = (event)=>{
-            event.preventDefault();
-            let formData =new FormData(document.getElementById("joinForm"));
-            
-            axios.post('/auth/join', formData)
-              .then((res) => {
-                console.log(res);
-            })
-        }
+    window.onload = () => {
+      const errorParam= new URL(location.href).searchParams.get('error')
+      const message=new URL(location.href).searchParams.get('message')
+      if (errorParam!==null) {
+        alert(errorParam);
+      }
+      if(message!==null){
+        alert(message);
+      }
+    };
 
 </script>
 </html>
