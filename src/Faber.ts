@@ -1,8 +1,8 @@
-import type { RegisterCredentialDefinitionReturnStateFinished } from '@credo-ts/anoncreds'
-import type { ConnectionRecord, ConnectionStateChangedEvent, InitConfig } from '@credo-ts/core'
-import type { IndyVdrRegisterSchemaOptions, IndyVdrRegisterCredentialDefinitionOptions } from '@credo-ts/indy-vdr'
-import {agentDependencies} from '@credo-ts/node'
-import { ConnectionEventTypes, KeyType, TypedArrayEncoder, utils,Agent } from '@credo-ts/core'
+import type { RegisterCredentialDefinitionReturnStateFinished } from '@aries-framework/anoncreds'
+import type { ConnectionRecord, ConnectionStateChangedEvent, InitConfig } from '@aries-framework/core'
+import type { IndyVdrRegisterSchemaOptions, IndyVdrRegisterCredentialDefinitionOptions } from '@aries-framework/indy-vdr'
+import {agentDependencies} from '@aries-framework/node'
+import { ConnectionEventTypes, KeyType, TypedArrayEncoder, utils,Agent } from '@aries-framework/core'
 
 import { BaseAgent, indyNetworkConfig } from './BaseAgent'
 import { Color, Output, greenText, purpleText, redText } from './OutputClass'
@@ -22,7 +22,7 @@ class Faber extends BaseAgent {
     super(port, name)
 
     this.initializeAgent();
-    this.createDid();
+    this.importDid();
     console.log("Faber Construct")
   }
 
@@ -153,7 +153,7 @@ class Faber extends BaseAgent {
           tag: 'latest',
         },
         options: {
-          supportRevocation: false,
+          //supportRevocation: false,
           endorserMode: 'internal',
           endorserDid: this.anonCredsIssuerId,
         },

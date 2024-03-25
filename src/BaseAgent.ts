@@ -1,5 +1,5 @@
-import type { AgentDependencies, DidCreateResult, InitConfig } from '@credo-ts/core'
-import type { IndyVdrPoolConfig } from '@credo-ts/indy-vdr'
+import type { AgentDependencies, DidCreateResult, DidRecord, InitConfig, Wallet, WalletConfig } from '@aries-framework/core'
+import type { IndyVdrPoolConfig } from '@aries-framework/indy-vdr'
 
 import {
   AnonCredsCredentialFormatService,
@@ -11,15 +11,15 @@ import {
   LegacyIndyProofFormatService,
   V1CredentialProtocol,
   V1ProofProtocol,
-} from '@credo-ts/anoncreds'
-import { AskarModule } from '@credo-ts/askar'
+} from '@aries-framework/anoncreds'
+import { AskarModule } from '@aries-framework/askar'
 import {
   CheqdAnonCredsRegistry,
   CheqdDidRegistrar,
   CheqdDidResolver,
   CheqdModule,
   CheqdModuleConfig,
-} from '@credo-ts/cheqd'
+} from '@aries-framework/cheqd'
 import {
   ConnectionsModule,
   DidsModule,
@@ -32,19 +32,19 @@ import {
   Agent,
   HttpOutboundTransport,
   KeyType,
-  TypedArrayEncoder,
-  inject
-} from '@credo-ts/core'
-import { IndyVdrIndyDidResolver, IndyVdrAnonCredsRegistry, IndyVdrModule } from '@credo-ts/indy-vdr'
-import { agentDependencies, HttpInboundTransport } from '@credo-ts/node'
+} from '@aries-framework/core'
+import { IndyVdrIndyDidResolver, IndyVdrAnonCredsRegistry, IndyVdrModule,IndyVdrDidCreateOptions,IndyVdrDidCreateResult,IndyVdrIndyDidRegistrar } from '@aries-framework/indy-vdr'
+import { agentDependencies, HttpInboundTransport } from '@aries-framework/node'
 import { anoncreds } from '@hyperledger/anoncreds-nodejs'
+import { AnonCredsRsModule } from '@aries-framework/anoncreds-rs'
 import { ariesAskar } from '@hyperledger/aries-askar-nodejs'
 import { indyVdr } from '@hyperledger/indy-vdr-nodejs'
 import { greenText } from './OutputClass'
 import "reflect-metadata"
 import { container, injectable } from 'tsyringe'
+import dotenv from 'dotenv';
 
-
+dotenv.config();
 export interface IAskarAnonCredsIndyModules{
   connections: ConnectionsModule,
   anoncreds: AnonCredsModule,
@@ -82,11 +82,12 @@ export class BaseAgent {
   
     const config = {
       label: name,
-      walletConfig: {
+      walletConfig: { //지갑은 자동으로 생성됨
         id: name,
         key: name,
       },
       endpoints: [`http://localhost:${this.port}`],
+      autoUpdateStorageOnStartup:true,
     } satisfies InitConfig
     this.config = config
     container.register(AnonCredsIssuerServiceSymbol,{useValue:AnonCredsIssuerServiceSymbol})
@@ -95,115 +96,59 @@ export class BaseAgent {
       config,
      dependencies: agentDependencies,
      modules: getAskarAnonCredsIndyModules(),
-    })
+    });
     this.agent.registerInboundTransport(new HttpInboundTransport({ port }))
     this.agent.registerOutboundTransport(new HttpOutboundTransport())
     console.log("BaseAgent Construct")
   }
 
+  // public async createDid():Promise<string>{
+  //   //console.log(this.agent.wallet) //지갑생성되어있는지 확인 (did는 wallet에 저장된다.)
+  //   const key = await this.agent.wallet.createKey({keyType:KeyType.P256})
+  //   console.log(key);
+  //   const indyDocument :DidCreateResult = await this.agent.dids.create({
+  //     method:"indy",
+  //     options:{
+  //       endorserDid:"did:indy:bcovrin:test:8ECVSk179mjsjKRLWiQtss",
+  //       endorserMode:'external',
+  //       }
+  //     });
+  //     const indyDid = String(indyDocument.didState.did);
+  //     console.log("indyDid"+indyDid);
+  //     return this.anonCredsIssuerId= indyDid;
+  //   }
+
   public async createDid():Promise<string>{
-    const indyDocument :DidCreateResult = await this.agent.dids.create({
-        method:"did:sov",
-        privateKeys: [
-          {
-            keyType: KeyType.Ed25519,
-            privateKey: TypedArrayEncoder.fromString('afjdemoverysercure00000000000000'),
-          },
-        ]
-      });
-      console.log(indyDocument);
-      const indyDid = String(indyDocument.didState.did);
-      console.log("indyDid"+indyDid);
-      return this.anonCredsIssuerId= indyDid;
-    }
+    await this.agent.wallet.open(this.config.walletConfig as WalletConfig)
+    const did = await this.agent.dids.create({
+      method: 'cheqd',
+      // the secret contains a the verification method type and id
+      secret: {
+        verificationMethod: {
+          id: 'key-1',
+          type: 'Ed25519VerificationKey2020',
+        },
+      },
+      // an optional methodSpecificIdAlgo parameter
+      options: {
+        network: 'testnet',
+        methodSpecificIdAlgo: 'uuid',
+      },
+    })
+    console.log(did)
+    return did.didState.did as string;
+}
 
   public async importDid() {
-    // NOTE: we assume the did is already registered on the ledger, we just store the private key in the wallet
-    // and store the existing did in the wallet
-    // indy did is based on private key (seed)
-    // const unqualifiedIndyDid = '2jEvRuKmfBJTRa7QowDpNN'
-    // const cheqdDid = 'did:cheqd:testnet:d37eba59-513d-42d3-8f9f-d1df0548b675'
-    // const indyDid = `did:indy:${indyNetworkConfig.indyNamespace}:${unqualifiedIndyDid}`
-
     if (!this.anonCredsIssuerId) this.anonCredsIssuerId=await this.createDid();
     else return this.anonCredsIssuerId
   }
 
   public async initializeAgent() {
-    await this.agent.initialize()
-
+    await this.agent.initialize();
     console.log(greenText(`\nAgent ${this.name} created!\n`))
   }
-
 }
-
-// class AskarAnonCredsIndyModules implements IAskarAnonCredsIndyModules{
-
-//   private legacyIndyCredentialFormatService = new LegacyIndyCredentialFormatService()
-//   private legacyIndyProofFormatService = new LegacyIndyProofFormatService()
-//   connections= new ConnectionsModule({
-//     autoAcceptConnections: true,
-//   })
-//   credentials= new CredentialsModule({
-//     autoAcceptCredentials: AutoAcceptCredential.ContentApproved,
-//     credentialProtocols: [
-//       new V1CredentialProtocol({
-//         indyCredentialFormat: this.legacyIndyCredentialFormatService,
-//       }),
-//       new V2CredentialProtocol({
-//         credentialFormats: [this.legacyIndyCredentialFormatService, new AnonCredsCredentialFormatService()],
-//       }),
-//     ],
-//   })
-//   private proofs = new ProofsModule({
-//     autoAcceptProofs: AutoAcceptProof.ContentApproved,
-//     proofProtocols: [
-//       new V1ProofProtocol({
-//         indyProofFormat: this.legacyIndyProofFormatService,
-//       }),
-//       new V2ProofProtocol({
-//         proofFormats: [this.legacyIndyProofFormatService, new AnonCredsProofFormatService()],
-//       }),
-//     ],
-//   })
-//   anoncreds= new AnonCredsModule({
-//     registries: [new IndyVdrAnonCredsRegistry(), new CheqdAnonCredsRegistry()],
-//     anoncreds,
-//   })
-//   indyVdr= new IndyVdrModule({
-//     indyVdr,
-//     networks: [indyNetworkConfig],
-//   })
-//   cheqd= new CheqdModule(
-//     new CheqdModuleConfig({
-//       networks: [
-//         {
-//           network: 'testnet',
-//           cosmosPayerSeed:
-//             'robust across amount corn curve panther opera wish toe ring bleak empower wreck party abstract glad average muffin picnic jar squeeze annual long aunt',
-//         },
-//       ],
-//     })
-//   )
-//   dids= new DidsModule({
-//     resolvers: [new IndyVdrIndyDidResolver(), new CheqdDidResolver()],
-//     registrars: [new CheqdDidRegistrar()],
-//   })
-//   askar= new AskarModule({
-//     ariesAskar,
-//   })
-//   public getAskarAnonCredsIndyModules() {
-//     return {
-//       connections: ConnectionsModule,
-//       anoncreds: AnonCredsModule,
-//       indyVdr: IndyVdrModule,
-//       cheqd: CheqdModule,
-//       dids: DidsModule,
-//       askar: AskarModule
-//     }
-//   }
-// }
-
 
 function getAskarAnonCredsIndyModules(){
   const legacyIndyCredentialFormatService = new LegacyIndyCredentialFormatService()
@@ -236,6 +181,8 @@ function getAskarAnonCredsIndyModules(){
       }),
       anoncreds: new AnonCredsModule({
         registries: [new IndyVdrAnonCredsRegistry(), new CheqdAnonCredsRegistry()],
+      }),
+      anoncredsRs: new AnonCredsRsModule({
         anoncreds,
       }),
       indyVdr: new IndyVdrModule({
@@ -247,8 +194,7 @@ function getAskarAnonCredsIndyModules(){
           networks: [
             {
               network: 'testnet',
-              cosmosPayerSeed:
-                'robust across amount corn curve panther opera wish toe ring bleak empower wreck party abstract glad average muffin picnic jar squeeze annual long aunt',
+              cosmosPayerSeed: process.env.COSMOSPAYERSEED
             },
           ],
         })
@@ -257,8 +203,9 @@ function getAskarAnonCredsIndyModules(){
         resolvers: [new IndyVdrIndyDidResolver(), new CheqdDidResolver()],
         registrars: [new CheqdDidRegistrar()],
       }),
-      askar: new AskarModule({
+      ariesAskar: new AskarModule({
         ariesAskar,
       }),
     } as const
   }
+ 
