@@ -96,6 +96,7 @@ const join :RequestHandler=async (req,res,next)=>{ //VC발급
         if(exEmail.isValid){
           await exEmail.update({isValid:false}); //다른 사람이 동일한 이메일로 가입하는 것을 방지
           /**VC발급 */
+        
           return res.redirect('/?message=가입성공');
         }
         else{
